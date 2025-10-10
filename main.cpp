@@ -2,6 +2,18 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <chrono>
+
+// CHIP-8 config
+const double CPU_HZ = 700.0; // Clock speed (cycles per second)
+const double DISPLAY_HZ = 60.0; // Refresh rate (frames per second)
+
+const double TIMER_HZ = 60.0;
+
+// Calculated cycle/frame durations (ms)
+const double CYCLE_DURATION_MS = 1000.0 / CPU_HZ;
+const double FRAME_DURATION_MS = 1000.0 / DISPLAY_HZ;
+const double TIMER_DURATION_MS = 1000.0 / TIMER_HZ;
 
 // General constants
 const unsigned int MEMORY_SIZE = 4096;
@@ -59,6 +71,7 @@ class Chip8
 
     // 64x32 monochrome display (32-bit int for SDL compatibility)
     uint32_t display[DISPLAY_WIDTH * DISPLAY_HEIGHT]{};
+    bool draw_flag = false;
 
     // Program counter; points to current instruction
     // 16 bits accommodates 12-bit memory addresses
@@ -122,29 +135,46 @@ public:
         delete[] buffer;
     }
 
-    // Main loop
-    void run()
+    bool should_redraw()
     {
-        bool exit = false;
+        return this->draw_flag;
+    }
 
-        while (!exit)
+    void redraw()
+    {
+        std::cout << "\033[2J\033[1;1H";
+        std::cout.flush(); // Ensure the output is immediately sent to the terminal
+
+        int col_position = 0;
+        for (int i = 0; i < DISPLAY_WIDTH * DISPLAY_HEIGHT; ++i)
         {
-            this->fetch_instruction();
-            this->decode_and_execute();
-
-            int col_position = 0;
-
-            for (int i = 0; i < DISPLAY_WIDTH * DISPLAY_HEIGHT; ++i)
+            std::cout << (this->display[i] ? "██" : "  ");
+            if (++col_position >= DISPLAY_WIDTH)
             {
-                std::cout << (this->display[i] ? "██" : "  ");
-
-                if (++col_position >= DISPLAY_WIDTH)
-                {
-                    std::cout << '\n';
-                    col_position = 0;
-                }
+                std::cout << '\n';
+                col_position = 0;
             }
         }
+
+        draw_flag = false;
+    }
+
+    void decrement_timers()
+    {
+        if (this->delay_timer > 0)
+        {
+            --this->delay_timer;
+        }
+        if (this->sound_timer > 0)
+        {
+            --this->sound_timer;
+        }
+    }
+
+    void cycle()
+    {
+        this->fetch_instruction();
+        this->decode_and_execute();
     }
 
     // Fetch
@@ -241,19 +271,24 @@ public:
                     // Shift current bit into the 1s place and mask to get the sprite pixel value
                     const bool sprite_pixel = (sprite_data >> (7 - col)) & 0x0001;
 
-                    // Get the value of the corresponding display pixel
-                    const int display_index = x_coord + (y_coord * DISPLAY_WIDTH);
-                    const bool display_pixel = this->display[display_index]; // Truncates 32-bit int
+                    // Only flip display pixel/set draw flag if sprite pixel is active
+                    if (sprite_pixel)
+                    {
+                        // Get the value of the corresponding display pixel
+                        const int display_index = x_coord + (y_coord * DISPLAY_WIDTH);
+                        const bool display_pixel = this->display[display_index]; // Truncates 32-bit int
 
-                    // Set display pixel accordingly
-                    if (sprite_pixel && display_pixel)
-                    {
-                        this->display[display_index] = PIXEL_OFF;
-                        this->registers[0x0F] = 1;
-                    }
-                    else if (sprite_pixel && !display_pixel)
-                    {
-                        this->display[display_index] = PIXEL_ON;
+                        if (display_pixel)
+                        {
+                            this->display[display_index] = PIXEL_OFF;
+                            this->registers[0x0F] = 1;
+                        }
+                        else
+                        {
+                            this->display[display_index] = PIXEL_ON;
+                        }
+
+                        this->draw_flag = true;
                     }
 
                     x_coord += 1;
@@ -263,12 +298,49 @@ public:
             }
         }
     }
-
-    // Execute
 };
+
+double get_time_in_ms()
+{
+    using namespace std::chrono;
+    using double_ms = duration<double, std::chrono::milliseconds::period>;
+
+    auto now = system_clock::now().time_since_epoch();
+    double now_ms = duration_cast<double_ms>(now).count();
+
+    return now_ms;
+}
 
 int main()
 {
     Chip8 chip8;
-    chip8.run();
+
+    double prev_cycle_time, prev_frame_time, prev_timer_time;
+    prev_cycle_time = prev_frame_time = get_time_in_ms();
+
+    while (true)
+    {
+        const double now = get_time_in_ms();
+
+        const double elapsed_cycle_time = now - prev_cycle_time;
+        if (elapsed_cycle_time >= CYCLE_DURATION_MS)
+        {
+            chip8.cycle();
+            prev_cycle_time += CYCLE_DURATION_MS;
+        }
+
+        const double elapsed_frame_time = now - prev_frame_time;
+        if (elapsed_frame_time >= FRAME_DURATION_MS && chip8.should_redraw())
+        {
+            chip8.redraw();
+            prev_frame_time += FRAME_DURATION_MS;
+        }
+
+        const double elapsed_timer_time = now - prev_timer_time;
+        if (elapsed_timer_time >= TIMER_DURATION_MS)
+        {
+            chip8.decrement_timers();
+            prev_timer_time += TIMER_DURATION_MS;
+        }
+    }
 }
