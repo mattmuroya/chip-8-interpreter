@@ -1,3 +1,6 @@
+#include <cstdlib>
+#include <ctime>
+
 #include "cpu.h"
 #include "memory.h"
 #include "display.h"
@@ -11,8 +14,9 @@ Cpu::Cpu() :
     stack_pointer{ 0 },
     delay_timer{ 0 },
     sound_timer{ 0 },
-    opcode{}
+    opcode{ 0 }
 {
+    srand(time(NULL));
 }
 
 void Cpu::tick(Memory& memory, Display& display)
@@ -44,14 +48,48 @@ void Cpu::decode_and_execute(Memory& memory, Display& display)
 
     if (op == 0x0000)
     {
-        if (NNN == 0x0E0)
+        if (NNN == 0x00E0)
         {
             display.clear();
+        }
+        else if (NNN == 0x00EE)
+        {
+            // Return from subroutine
+            stack_pointer -= 1;
+            program_counter = stack[stack_pointer];
         }
     }
     else if (op == 0x1000)
     {
         program_counter = NNN;
+    }
+    else if (op == 0x2000)
+    {
+        // Call subroutine
+        stack[stack_pointer] = program_counter;
+        stack_pointer += 1;
+        program_counter = NNN;
+    }
+    else if (op == 0x3000)
+    {
+        if (registers[X] == NN)
+        {
+            program_counter += 2;
+        }
+    }
+    else if (op == 0x4000)
+    {
+        if (registers[X] != NN)
+        {
+            program_counter += 2;
+        }
+    }
+    else if (op == 0x5000)
+    {
+        if (registers[X] == registers[Y])
+        {
+            program_counter += 2;
+        }
     }
     else if (op == 0x6000)
     {
@@ -59,11 +97,103 @@ void Cpu::decode_and_execute(Memory& memory, Display& display)
     }
     else if (op == 0x7000)
     {
-        registers[X] += NN; // Note: Does not set carry flag (VF) on overflow
+        // Note: Do NOT set carry flag (VF) on overflow
+        registers[X] += NN;
+    }
+    else if (op == 0x8000)
+    {
+        if (N == 0x0)
+        {
+            registers[X] = registers[Y];
+        }
+        else if (N == 0x1)
+        {
+            registers[X] |= registers[Y];
+        }
+        else if (N == 0x2)
+        {
+            registers[X] &= registers[Y];
+        }
+        else if (N == 0x3)
+        {
+            registers[X] ^= registers[Y];
+        }
+        else if (N == 0x4)
+        {
+            // Check if operation will result in overflow (sum greater than max 8-bit integer)
+            int overflow = registers[X] > 0xFF - registers[Y] ? 1 : 0;
+
+            // Perform operation
+            registers[X] += registers[Y];
+
+            // Set carry flag
+            registers[0xF] = overflow;
+        }
+        else if (N == 0x5)
+        {
+            // Check if operation will result in "underflow" (1 if no carry required; 0 if carry required)
+            int overflow = registers[X] >= registers[Y] ? 1 : 0;
+
+            // Perform operation
+            registers[X] -= registers[Y];
+
+            // Set carry flag
+            registers[0xF] = overflow;
+        }
+        else if (N == 0x6)
+        {
+            if (CLASSIC_MODE)
+            {
+                registers[X] = registers[Y];
+            }
+
+            // Store bit that will be lost in shift
+            uint8_t lost_bit = registers[X] & 0b00000001;
+            registers[X] >>= 1;
+            registers[0xF] = lost_bit;
+        }
+        else if (N == 0x7)
+        {
+            // Check if operation will result in "underflow" (1 if no carry required; 0 if carry required)
+            int overflow = registers[Y] >= registers[X] ? 1 : 0;
+
+            // Perform operation
+            registers[X] = registers[Y] - registers[X];
+
+            // Set carry flag
+            registers[0xF] = overflow;
+        }
+        else if (N == 0xE)
+        {
+            if (CLASSIC_MODE)
+            {
+                registers[X] = registers[Y];
+            }
+
+            // Store bit that will be lost in shift
+            uint8_t lost_bit = (registers[X] & 0b10000000) >> 7;
+            registers[X] <<= 1;
+            registers[0xF] = lost_bit;
+        }
+    }
+    else if (op == 0x9000)
+    {
+        if (registers[X] != registers[Y])
+        {
+            program_counter += 2;
+        }
     }
     else if (op == 0xA000)
     {
         index_register = NNN;
+    }
+    else if (op == 0xB000)
+    {
+        program_counter = NNN + registers[CLASSIC_MODE ? 0x0 : X];
+    }
+    else if (op == 0xC000)
+    {
+        registers[X] = rand() & NN;
     }
     else if (op == 0xD000)
     {
@@ -73,7 +203,7 @@ void Cpu::decode_and_execute(Memory& memory, Display& display)
         // This pointer has been set by some previous instruction
 
         // Reset flag register
-        registers[0x0F] = 0;
+        registers[0xF] = 0;
 
         // VX and VY indicate initial x- and y-coordinates for drawing the sprite
         // Initialize y-coordinate and convert absolute (wrapped) value
@@ -103,7 +233,7 @@ void Cpu::decode_and_execute(Memory& memory, Display& display)
                 }
 
                 // Shift current bit into the 1s place and mask to get the pixel value
-                const bool sprite_pixel = (sprite_data >> (7 - col)) & 0x0001;
+                const bool sprite_pixel = (sprite_data >> (7 - col)) & 1;
 
                 if (sprite_pixel)
                 {
@@ -116,16 +246,91 @@ void Cpu::decode_and_execute(Memory& memory, Display& display)
             y_coord += 1;
         }
     }
+    else if (op == 0xE000)
+    {
+        // TODO: Skip if key (keypad implementation)
+    }
+    else if (op == 0xF000)
+    {
+        if (NN == 0x07)
+        {
+            registers[X] = delay_timer;
+        }
+        else if (NN == 0x15)
+        {
+            delay_timer = registers[X];
+        }
+        else if (NN == 0x18)
+        {
+            sound_timer = registers[X];
+        }
+        else if (NN == 0x0A)
+        {
+            // TODO: Get key (keypad implementation)
+        }
+        else if (NN == 0x1E)
+        {
+            index_register += registers[X];
+
+            // Set carry flag if index register overflows the typical 12-bit addressing range
+            // The original COSMAC VIP interpreter doesn't do this but some others (e.g. Amiga) do
+            if (index_register > 0x0FFF)
+            {
+                registers[0xF] = 1;
+            }
+        }
+        else if (NN == 0x29)
+        {
+            index_register = FONT_SET_START_ADDRESS + (registers[X] * BYTES_PER_FONT_SPRITE);
+        }
+        else if (NN == 0x33)
+        {
+            // Binary-coded decimal conversion
+            uint8_t decimal_value = registers[X];
+
+            // Place each digit of decimal value in X into memory starting at index register
+            // Iterate backwards beginning with least significant digit
+            for (int i = 2; i >= 0; --i)
+            {
+                memory.write(index_register + i, decimal_value % 10);
+                decimal_value /= 10;
+            }
+        }
+        else if (NN == 0x55)
+        {
+            for (int i = 0; i <= X; ++i)
+            {
+                memory.write(index_register + i, registers[i]);
+            }
+
+            if (CLASSIC_MODE)
+            {
+                index_register += (X + 1);
+            }
+        }
+        else if (NN == 0x65)
+        {
+            for (int i = 0; i <= X; ++i)
+            {
+                registers[i] = memory.read(index_register + i);
+            }
+
+            if (CLASSIC_MODE)
+            {
+                index_register += (X + 1);
+            }
+        }
+    }
 }
 
 void Cpu::decrement_timers()
 {
-    if (this->delay_timer > 0)
+    if (delay_timer > 0)
     {
-        --this->delay_timer;
+        --delay_timer;
     }
-    if (this->sound_timer > 0)
+    if (sound_timer > 0)
     {
-        --this->sound_timer;
+        --sound_timer;
     }
 }

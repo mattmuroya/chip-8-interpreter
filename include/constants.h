@@ -8,6 +8,8 @@ const double DISPLAY_HZ = 60.0; // Refresh rate (frames per second)
 
 const double TIMER_HZ = 60.0;
 
+const bool CLASSIC_MODE = false;
+
 // Calculated cycle/frame durations (ms)
 const double CYCLE_DURATION_MS = 1000.0 / CPU_HZ;
 const double FRAME_DURATION_MS = 1000.0 / DISPLAY_HZ;
@@ -42,6 +44,8 @@ const unsigned int FONT_SET_START_ADDRESS = 0x050;
 // 0xF0 --> 11110000 --> 1111
 // 0x80 --> 10000000 --> 1
 // 0x80 --> 10000000 --> 1
+
+const unsigned int BYTES_PER_FONT_SPRITE = 5;
 
 const uint8_t FONT_SET[80] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
