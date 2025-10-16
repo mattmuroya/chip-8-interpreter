@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "chip8.h"
-#include "utils.h"
 
 Chip8::Chip8()
 {
@@ -51,31 +50,22 @@ void Chip8::load_rom(std::string filename)
     delete[] buffer;
 }
 
-void Chip8::run()
+bool Chip8::should_redraw()
 {
-    double prev_cycle_time, prev_frame_time, prev_timer_time;
-    prev_cycle_time = prev_frame_time = prev_timer_time = get_time_in_ms();
+    return display.should_redraw();
+}
 
-    while (true)
-    {
-        const double now = get_time_in_ms();
+void Chip8::cycle_cpu()
+{
+    cpu.tick(memory, display);
+}
 
-        if (now - prev_cycle_time >= CYCLE_DURATION_MS)
-        {
-            cpu.tick(memory, display);
-            prev_cycle_time += CYCLE_DURATION_MS;
-        }
+void Chip8::decrement_timers()
+{
+    cpu.decrement_timers();
+}
 
-        if (now - prev_timer_time >= TIMER_DURATION_MS)
-        {
-            cpu.decrement_timers();
-            prev_timer_time += TIMER_DURATION_MS;
-        }
-
-        if (now - prev_frame_time >= FRAME_DURATION_MS && display.should_redraw())
-        {
-            display.redraw();
-            prev_frame_time += FRAME_DURATION_MS;
-        }
-    }
+void Chip8::redraw()
+{
+    display.redraw();
 }

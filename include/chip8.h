@@ -13,7 +13,10 @@ public:
 
     void load_font_set();
     void load_rom(std::string filename);
-    void run();
+    bool should_redraw();
+    void cycle_cpu();
+    void decrement_timers();
+    void redraw();
 
 private:
     Cpu cpu;
