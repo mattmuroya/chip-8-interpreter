@@ -9,8 +9,7 @@ class Display
 public:
     uint32_t set_pixel(int x, int y);
     void clear();
-    bool should_redraw();
-    void redraw();
+    const uint32_t* get_display_buffer() const;
 
 private:
     uint32_t buffer[DISPLAY_WIDTH * DISPLAY_HEIGHT];

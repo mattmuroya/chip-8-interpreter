@@ -4,6 +4,17 @@ project(chip8)
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 
+# Include CMake's FetchContent module
+include(FetchContent)
+
+# Fetch SDL3
+FetchContent_Declare(
+    SDL
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL
+    GIT_TAG a8589a8
+)
+FetchContent_MakeAvailable(SDL)
+
 # Define target executable
 add_executable(chip8)
 
@@ -22,6 +33,9 @@ target_sources(chip8
         src/display.cpp
         src/memory.cpp
 )
+
+# Link external library binaries
+target_link_libraries(chip8 PRIVATE SDL3::SDL3)
 
 # Copy ROMs folder into to the build directory
 add_custom_target(copy_files ALL

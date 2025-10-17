@@ -19,6 +19,7 @@ const double TIMER_DURATION_MS = 1000.0 / TIMER_HZ;
 const unsigned int MEMORY_SIZE = 4096;
 const unsigned int DISPLAY_WIDTH = 64;
 const unsigned int DISPLAY_HEIGHT = 32;
+const unsigned int DISPLAY_SCALE = 10;
 
 const uint32_t PIXEL_OFF = 0x00000000;
 const uint32_t PIXEL_ON = 0xFFFFFFFF;

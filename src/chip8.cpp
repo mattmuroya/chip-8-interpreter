@@ -50,11 +50,6 @@ void Chip8::load_rom(std::string filename)
     delete[] buffer;
 }
 
-bool Chip8::should_redraw()
-{
-    return display.should_redraw();
-}
-
 void Chip8::cycle_cpu()
 {
     cpu.tick(memory, display);
@@ -65,7 +60,7 @@ void Chip8::decrement_timers()
     cpu.decrement_timers();
 }
 
-void Chip8::redraw()
+const uint32_t* Chip8::get_display_buffer() const
 {
-    display.redraw();
+    return display.get_display_buffer();
 }
