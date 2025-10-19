@@ -4,20 +4,21 @@
 #include "utils.h"
 #include "constants.h"
 
-bool poll_events();
+bool poll_input();
 bool init_sdl();
 void quit_sdl();
 
 SDL_Window* g_window{ nullptr };
 SDL_Renderer* g_renderer{ nullptr };
 SDL_Texture* g_texture{ nullptr };
-SDL_FRect destination_rect{  };
+
+Chip8 chip8;
 
 int main()
 {
     init_sdl();
 
-    Chip8 chip8 = Chip8();
+    chip8 = Chip8();
     chip8.load_rom("roms/tests/4-flags.ch8");
 
     bool running = true;
@@ -27,8 +28,7 @@ int main()
 
     while (running)
     {
-
-        if (poll_events() == false)
+        if (!poll_input())
         {
             running = false;
             continue;
@@ -64,18 +64,41 @@ int main()
     quit_sdl();
 }
 
-bool poll_events()
+bool poll_input()
 {
-    SDL_Event e;
-    if (SDL_PollEvent(&e) == true)
+    SDL_Event event;
+
+    if (SDL_PollEvent(&event))
     {
-        if (e.type == SDL_EVENT_QUIT)
+        if (event.type == SDL_EVENT_QUIT)
         {
             return false;
         }
-        else if (e.type == SDL_EVENT_KEY_UP && e.key.key == SDLK_ESCAPE)
+        else if (event.type == SDL_EVENT_KEY_DOWN)
         {
-            return false;
+            // Have to do it this way because map::operator[] has no const overload
+            // Use map::find to get an iterator that returns the k-v pair
+            auto it = KEYMAP.find(event.key.scancode);
+
+            // Check that the key was found in map
+            if (it != KEYMAP.end())
+            {
+                // Get second item (value) from k-v pair
+                chip8.keydown(it->second);
+            }
+        }
+        else if (event.type == SDL_EVENT_KEY_UP)
+        {
+            if (event.key.key == SDLK_ESCAPE)
+            {
+                return false;
+            }
+
+            auto it = KEYMAP.find(event.key.scancode);
+            if (it != KEYMAP.end())
+            {
+                chip8.keyup(it->second);
+            }
         }
     }
 

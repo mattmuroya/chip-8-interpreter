@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
+#include <SDL3/SDL_scancode.h>
 
 // CHIP-8 config
 const double CPU_HZ = 700.0; // Clock speed (cycles per second)
@@ -65,4 +67,39 @@ const uint8_t FONT_SET[80] = {
     0xE0, 0x90, 0x90, 0x90, 0xE0, // D
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+};
+
+// Most computers that ran the original CHIP-8 interpreter had hexadecimal
+// keypads; the COSMAC VIP keypad looked like this:
+
+// +---+---+---+---+
+// | 1 | 2 | 3 | C |
+// |---+---+---+---|
+// | 4 | 5 | 6 | D |
+// |---+---+---+---|
+// | 7 | 8 | 9 | E |
+// |---+---+---+---|
+// | A | 0 | B | F |
+// +---+---+---+---+
+
+// We'll map these keys to the 16 alphanums on the left side of the keyboard
+// The keymap uses keyboard scancodes, not ASCII character codes
+
+const std::map<SDL_Scancode, uint8_t> KEYMAP{
+    {SDL_SCANCODE_1, 0x1},
+    {SDL_SCANCODE_2, 0x2},
+    {SDL_SCANCODE_3, 0x3},
+    {SDL_SCANCODE_4, 0xC},
+    {SDL_SCANCODE_Q, 0x4},
+    {SDL_SCANCODE_W, 0x5},
+    {SDL_SCANCODE_E, 0x6},
+    {SDL_SCANCODE_R, 0xD},
+    {SDL_SCANCODE_A, 0x7},
+    {SDL_SCANCODE_S, 0x8},
+    {SDL_SCANCODE_D, 0x9},
+    {SDL_SCANCODE_F, 0xE},
+    {SDL_SCANCODE_Z, 0xA},
+    {SDL_SCANCODE_X, 0x0},
+    {SDL_SCANCODE_C, 0xB},
+    {SDL_SCANCODE_V, 0xF},
 };
