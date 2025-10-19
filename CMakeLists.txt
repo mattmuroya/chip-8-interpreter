@@ -30,8 +30,9 @@ target_sources(chip8
         src/main.cpp
         src/chip8.cpp
         src/cpu.cpp
-        src/display.cpp
         src/memory.cpp
+        src/display.cpp
+        src/keypad.cpp
 )
 
 # Link external library binaries

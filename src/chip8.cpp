@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -58,6 +59,16 @@ void Chip8::cycle_cpu()
 void Chip8::decrement_timers()
 {
     cpu.decrement_timers();
+}
+
+void Chip8::keydown(uint8_t key)
+{
+    keypad.keydown(key);
+}
+
+void Chip8::keyup(uint8_t key)
+{
+    keypad.keyup(key);
 }
 
 const uint32_t* Chip8::get_display_buffer() const
