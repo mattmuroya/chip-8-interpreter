@@ -1,19 +1,25 @@
 #include <cstdint>
+#include <map>
 
 #include "keypad.h"
 
+Keypad::Keypad() :
+    pressed{}
+{
+}
+
 void Keypad::keydown(uint8_t key)
 {
-    pressed_keys[key] = true;
+    pressed[key] = true;
 }
 
 void Keypad::keyup(uint8_t key)
 {
-    pressed_keys[key] = false;
+    pressed[key] = false;
 }
 
 bool Keypad::is_pressed(uint8_t key)
 {
     // Zero-initializes if does not exist
-    return pressed_keys[key];
+    return pressed[key];
 }
