@@ -53,7 +53,7 @@ void Chip8::load_rom(std::string filename)
 
 void Chip8::cycle_cpu()
 {
-    cpu.tick(memory, display);
+    cpu.tick(memory, display, keypad);
 }
 
 void Chip8::decrement_timers()
@@ -69,6 +69,11 @@ void Chip8::keydown(uint8_t key)
 void Chip8::keyup(uint8_t key)
 {
     keypad.keyup(key);
+}
+
+void Chip8::clear_key_events()
+{
+    keypad.clear_key_events();
 }
 
 const uint32_t* Chip8::get_display_buffer() const

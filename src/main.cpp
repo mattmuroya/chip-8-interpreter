@@ -19,7 +19,7 @@ int main()
     init_sdl();
 
     chip8 = Chip8();
-    chip8.load_rom("roms/tests/4-flags.ch8");
+    chip8.load_rom("roms/tests/6-keypad.ch8");
 
     bool running = true;
 
@@ -39,6 +39,7 @@ int main()
         if (now - prev_cycle_time >= CYCLE_DURATION_MS)
         {
             chip8.cycle_cpu();
+            chip8.clear_key_events();
             prev_cycle_time += CYCLE_DURATION_MS;
         }
 

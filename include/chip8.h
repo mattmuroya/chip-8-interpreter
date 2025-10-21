@@ -18,6 +18,7 @@ public:
     void decrement_timers();
     void keyup(uint8_t key);
     void keydown(uint8_t key);
+    void clear_key_events();
     const uint32_t* get_display_buffer() const;
 
 private:

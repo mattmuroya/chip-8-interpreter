@@ -5,6 +5,7 @@
 
 #include "memory.h"
 #include "display.h"
+#include "keypad.h"
 #include "constants.h"
 
 class Cpu
@@ -12,12 +13,12 @@ class Cpu
 public:
     Cpu();
 
-    void tick(Memory& memory, Display& display);
+    void tick(Memory& memory, Display& display, Keypad& keypad);
     void decrement_timers();
 
 private:
     void fetch_instruction(Memory& memory);
-    void decode_and_execute(Memory&, Display& display);
+    void decode_and_execute(Memory&, Display& display, Keypad& keypad);
 
     // General-purpose variable registers V0 to VF
     std::array<uint8_t, NUMBER_OF_REGISTERS> registers;
@@ -39,4 +40,7 @@ private:
 
     // Slot to store current instruction
     uint16_t opcode;
+
+    // Slot to store latest keypress for FX0A instruction
+    int8_t last_key_pressed;
 };

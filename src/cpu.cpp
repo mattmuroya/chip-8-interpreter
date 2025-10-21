@@ -14,15 +14,16 @@ Cpu::Cpu() :
     stack_pointer{ 0 },
     delay_timer{ 0 },
     sound_timer{ 0 },
-    opcode{ 0 }
+    opcode{ 0 },
+    last_key_pressed{ -1 }
 {
     srand(time(NULL));
 }
 
-void Cpu::tick(Memory& memory, Display& display)
+void Cpu::tick(Memory& memory, Display& display, Keypad& keypad)
 {
     fetch_instruction(memory);
-    decode_and_execute(memory, display);
+    decode_and_execute(memory, display, keypad);
 }
 
 void Cpu::fetch_instruction(Memory& memory)
@@ -37,7 +38,7 @@ void Cpu::fetch_instruction(Memory& memory)
 }
 
 // Decode
-void Cpu::decode_and_execute(Memory& memory, Display& display)
+void Cpu::decode_and_execute(Memory& memory, Display& display, Keypad& keypad)
 {
     const uint16_t op = (opcode & 0xF000);
     const uint8_t X = (opcode & 0x0F00) >> 8;
@@ -248,7 +249,21 @@ void Cpu::decode_and_execute(Memory& memory, Display& display)
     }
     else if (op == 0xE000)
     {
-        // TODO: Skip if key (keypad implementation)
+        if (NN == 0x9E)
+        {
+            if (keypad.is_pressed(registers[X]))
+            {
+                SDL_log('test');
+                program_counter += 2;
+            }
+        }
+        else if (NN == 0xA1)
+        {
+            if (!keypad.is_pressed(registers[X]))
+            {
+                program_counter += 2;
+            }
+        }
     }
     else if (op == 0xF000)
     {
@@ -266,7 +281,29 @@ void Cpu::decode_and_execute(Memory& memory, Display& display)
         }
         else if (NN == 0x0A)
         {
-            // TODO: Get key (keypad implementation)
+            if (last_key_pressed != -1 && keypad.is_released_this_loop(last_key_pressed))
+            {
+                // Some key was previously pressed, and it was released this loop
+                // Store that key in VX and clear last keypress state; instruction complete
+                registers[X] = last_key_pressed;
+                last_key_pressed = -1;
+            }
+            else
+            {
+                // Either no key has been pressed, or we are still waiting for the pressed key to release
+                // Cycle through keys and update the latest keypress if a new key was pressed this loop
+                for (int i = 0; i < 16; ++i)
+                {
+                    if (keypad.is_pressed_this_loop(i))
+                    {
+                        last_key_pressed = i;
+                        break;
+                    }
+                }
+
+                // Decrement PC to retry instruction
+                program_counter -= 2;
+            }
         }
         else if (NN == 0x1E)
         {
