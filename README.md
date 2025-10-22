@@ -1,8 +1,8 @@
 # CHIP-8 Interpreter
 
 [CHIP-8](https://en.wikipedia.org/wiki/CHIP-8) is a virtual machine/fantasy game
-console originally developed by Joseph Weisbecker in 1977 for the COSMAC VIP
-microcomputer.
+console originally developed by Joseph Weisbecker for the COSMAC VIP
+microcomputer in 1977.
 
 ![Pong 2 for CHIP-8 by David Winter, 1997](assets/pong-2-david-winter-1997.png)
 
