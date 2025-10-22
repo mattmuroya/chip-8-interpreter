@@ -4,6 +4,11 @@
 #include "display.h"
 #include "constants.h"
 
+Display::Display()
+    : buffer{}
+{
+}
+
 uint32_t Display::set_pixel(int x, int y)
 {
     const int display_index = x + (y * DISPLAY_WIDTH);

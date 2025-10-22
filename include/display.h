@@ -7,6 +7,8 @@
 class Display
 {
 public:
+    Display();
+
     uint32_t set_pixel(int x, int y);
     void clear();
     const uint32_t* get_display_buffer() const;
