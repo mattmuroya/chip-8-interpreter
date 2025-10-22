@@ -19,7 +19,7 @@ int main()
     init_sdl();
 
     chip8 = Chip8();
-    chip8.load_rom("roms/tests/6-keypad.ch8");
+    chip8.load_rom("roms/Pong 2 (Pong hack) [David Winter, 1997].ch8");
 
     bool running = true;
 
