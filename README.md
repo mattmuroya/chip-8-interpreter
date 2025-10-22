@@ -4,34 +4,33 @@
 console invented by Joseph Weisbecker, originally developed for the COSMAC VIP
 microcomputer.
 
-This project is a C++/SDL3 implementation of the CHIP-8 interpreter designed to
-run games and programs written for the original virtual console. Strictly
-speaking, this project is not technically an "emulator" (since there is no
-actual hardware to emulate), but since it shares many characteristics with
-modern software emulators, this document uses the terms "interpreter" and
-"emulator" interchangeably.
+![Pong 2 for CHIP-8 by David Winter, 1997](assets/pong-2-david-winter-1997.png)
 
-## Getting started
+This repo contains a C++/SDL3 implementation of the CHIP-8 interpreter designed
+to run games and programs written for the original virtual machine/console.
+Strictly speaking, it is not technically an "emulator" (since there is no actual
+hardware to emulate); however, since it shares many characteristics with modern
+software emulators, this document uses the terms "interpreter" and "emulator"
+interchangeably.
+
+## Dependencies
 
 This project uses [SDL3](https://github.com/libsdl-org/SDL) for input polling,
-window management, graphics rendering, and sound. Dependencies are managed
-automatically via CMake's `FetchContent` module.
+window management, and graphics rendering. Dependencies are managed
+automatically via CMake's `FetchContent` module, so no separate installation is
+required.
+
+## Getting started
 
 To build and run this application:
 
 ```sh
 $ git clone https://github.com/mattmuroya/chip-8-interpreter.git
-
 $ cd chip-8-interpreter
-
 $ mkdir build
-
 $ cd build
-
 $ cmake ..
-
 $ make
-
 $ ./chip8
 ```
 
